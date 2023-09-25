@@ -9,11 +9,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(WARN_CFLAGS -Wall -Wextra)
 
-add_executable(firmware
-	main.cpp
+add_executable(firmware_array
+	main_array.cpp
 	draw.cpp
 )
-target_compile_options(firmware PRIVATE ${WARN_CFLAGS})
-target_include_directories(firmware PUBLIC .)
-target_link_libraries(firmware pico_stdlib hardware_pio hardware_dma picodmx)
-pico_add_extra_outputs(firmware)
+
+add_executable(firmware_dmx2pixel
+	main_dmx2pixel.cpp
+)
+
+
+target_compile_options(firmware_array PRIVATE ${WARN_CFLAGS})
+target_include_directories(firmware_array PUBLIC .)
+target_link_libraries(firmware_array pico_stdlib hardware_pio hardware_dma picodmx)
+pico_add_extra_outputs(firmware_array)
+
+target_compile_options(firmware_dmx2pixel PRIVATE ${WARN_CFLAGS})
+target_include_directories(firmware_dmx2pixel PUBLIC .)
+target_link_libraries(firmware_dmx2pixel pico_stdlib hardware_pio hardware_dma picodmx)
+pico_add_extra_outputs(firmware_dmx2pixel)

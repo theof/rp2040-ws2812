@@ -4,7 +4,7 @@
 #include "hardware/irq.h"
 #include "ws2812.pio.h"
 #include "DmxInput.h"
-#include "leds.h"
+#include "leds_array.h"
 
 #define WS2812_PIN_BASE 4
 #define DMA_CHANNEL 0
@@ -149,7 +149,11 @@ int main() {
 			printf("acquiring semaphore %d \n", (u32)(time_us_64() - dma_start_time));
 
 		sem_acquire_blocking(&reset_delay_complete_sem);
-		draw((uint8_t *)buffers[current], dmx_buffer, dmx_buffer_smooth);
+		for (int i = 0; i < NUM_PIXELS; i++) {
+			buffers[current][i] = 0xFFFFFF00;
+		}
+			
+		//draw((uint8_t *)buffers[current], dmx_buffer, dmx_buffer_smooth);
 		if (dma_start_time)
 			printf("acquired semaphore %d \n", (u32)(time_us_64() - dma_start_time));
 		output_dma(buffers[current]);

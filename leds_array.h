@@ -7,7 +7,7 @@
 
 #define PIXELS_X 8
 #define PIXELS_Y 30
-#define NUM_PIXELS 240
+#define NUM_PIXELS 50
 #define DMX_MAX_VALUE 256.
 #define DMX_START_CHANNEL 1
 #define DMX_NUM_CHANNELS 6

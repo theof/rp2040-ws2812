@@ -18,11 +18,14 @@ debug:
 clean:
 	rm -rf $(BUILD_DIR)
 
-run: debug
-	arm-none-eabi-gdb -x openocd.gdb build/firmware.elf
+run_array: debug
+	arm-none-eabi-gdb -x openocd.gdb build/firmware_array.elf
+
+run_dmx2pixel: debug
+	arm-none-eabi-gdb -x openocd.gdb build/firmware_dmx2pixel.elf
 
 console:
 	minicom -D /dev/ttyACM0 -b 115200
 
 openocd:
-	openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl
+	openocd -f interface/cmsis-dap.cfg -c "adapter speed 5000; set USE_CORE 0" -f target/rp2040.cfg -s tcl

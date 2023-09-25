@@ -1,4 +1,4 @@
-#include "leds.h"
+#include "leds_array.h"
 #define PI 3.14159265359
 #define NUM_PATTERNS count_of(pattern_table)
 

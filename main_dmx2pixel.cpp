@@ -170,15 +170,6 @@ int main() {
 
 		sem_acquire_blocking(&reset_delay_complete_sem);
 
-		if (!dmx_frame_count) {
-			px_buffer[0] = 0;
-		} else if (dmx_frame_count % 3 == 0) {
-			px_buffer[0] = 0xff000000;
-		} else if (dmx_frame_count % 3 == 1) {
-			px_buffer[0] = 0x00ff0000;
-		} else if (dmx_frame_count % 3 == 2) {
-			px_buffer[0] = 0x0000ff00;
-		}
 		for (int i = 1; i < PX_NUM; i++) {
 			px_buffer[i] =          // start at +1 to skip dmx start code
 				dmx_buffer_copy[i * 3 + 1] << 24
@@ -198,11 +189,7 @@ int main() {
 		gpio_put(PICO_DEFAULT_LED_PIN, dmx_frame_count % 2);
 
 		sem_acquire_blocking(&reset_delay_complete_sem);
-		// Blink the LED to indicate that a packet was received
-		//digitalWrite(LED_BUILTIN, HIGH);
-		//delay(10);
-		//digitalWrite(LED_BUILTIN, LOW);
-		for (int i = 1; i < PX_NUM; i++) {
+		for (int i = 0; i < PX_NUM; i++) {
 			px_buffer[i] =          // start at +1 to skip dmx start code
 				dmx_buffer[i * 3 + 1] << 24
 				| dmx_buffer[i * 3 + 2] << 16

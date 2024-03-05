@@ -11,18 +11,18 @@
 #include "DmxInput.h"
 
 #define PX_PIN_BASE 4
-#define PX_NUM 50
+#define PX_NUM 150
 
 #define PX_DMA_CHANNEL 0
 #define PX_DMA_CHANNEL_MASK (1u << PX_DMA_CHANNEL)
 
 DmxInput dmxInput;
 #define DMX_GPIO_PIN 8
-#define DMX_START_CHANNEL 1
+#define DMX_START_CHANNEL 50
 #define DMX_START_CODE 0
 
 //XXX: the number of channels sent by the dmx emitter MUST be exactly this
-#define DMX_NUM_CHANNELS 400
+#define DMX_NUM_CHANNELS 500
 
 typedef uint64_t i64;
 typedef int32_t i32;
@@ -109,44 +109,43 @@ void dmx_callback(DmxInput *input) {
 	new_dmx_input = true;
 }
 
-static void fake_dmx_input() {
-	static u64 last = 0;
-
-	u64 now = time_us_64();
-	if (now > last + 10000) {
-		last = now;
-		new_dmx_input = true;
-		float dimm = (cos(((float)(now) / 1000000. * 2)) + 1) / 2;
-		for (int i = 0; i < PX_NUM; i++) {
-				dmx_buffer[i * 3] = 240 * dimm;
-				dmx_buffer[i * 3 + 1] = 108 * dimm;
-				dmx_buffer[i * 3 + 2] = 54 * dimm;
-		}
-	}
-}
-
-
 int main() {
     stdio_init_all();
 	puts("hello world");
 
+	// setup ws2812
     PIO pio = pio0;
     int sm = pio_claim_unused_sm(pio, true);
     uint offset = pio_add_program(pio, &ws2812_program);
-
     ws2812_program_init(pio, sm, offset, PX_PIN_BASE, 800000, false);
-
     sem_init(&reset_delay_complete_sem, 1, 1); // initially posted so we don't block first time
-	gpio_pull_up(DMX_GPIO_PIN);
     dma_init(pio, sm);
 
+	// setup dmx
+	gpio_pull_up(DMX_GPIO_PIN);
 	dmxInput.begin(DMX_GPIO_PIN, DMX_START_CHANNEL, DMX_NUM_CHANNELS, pio=pio1, false);
 
-    //inMode(LED_BUILTIN, OUTPUT);
+	// setup gpio
 	gpio_init(PICO_DEFAULT_LED_PIN);
 	gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 	gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
+	while (1) {
+	    // Wait for next DMX packet
+		dmxInput.read(dmx_buffer);
+		dmx_frame_count++;
+		gpio_put(PICO_DEFAULT_LED_PIN, dmx_frame_count % 2);
+
+		sem_acquire_blocking(&reset_delay_complete_sem);
+		for (int i = 0; i < PX_NUM; i++) {
+			px_buffer[i] =          // start at +1 to skip dmx start code
+				dmx_buffer[i * 3 + DMX_START_CHANNEL] << 24
+				| dmx_buffer[i * 3 + DMX_START_CHANNEL + 1] << 16
+				| dmx_buffer[i * 3 + DMX_START_CHANNEL + 2] << 8;
+		}
+
+		output_dma(px_buffer);
+	}
 	/*
 	dmxInput.read_async(dmx_buffer, dmx_callback);
 
@@ -182,20 +181,4 @@ int main() {
 		output_dma(px_buffer);
     }
 	*/
-	while (1) {
-	    // Wait for next DMX packet
-		dmxInput.read(dmx_buffer);
-		dmx_frame_count++;
-		gpio_put(PICO_DEFAULT_LED_PIN, dmx_frame_count % 2);
-
-		sem_acquire_blocking(&reset_delay_complete_sem);
-		for (int i = 0; i < PX_NUM; i++) {
-			px_buffer[i] =          // start at +1 to skip dmx start code
-				dmx_buffer[i * 3 + 1] << 24
-				| dmx_buffer[i * 3 + 2] << 16
-				| dmx_buffer[i * 3 + 3] << 8;
-		}
-
-		output_dma(px_buffer);
-	}
 }
